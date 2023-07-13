@@ -10,7 +10,47 @@ import urllib
 import json
 
 
-#Flipkart Spider
+#Myntra Spider
+class MyntraspiderSpider(scrapy.Spider):
+    name = "myntraSpider"
+    allowed_domains = ["myntra.com"]
+
+    # overWrites specific settings of settings
+    custom_settings = {
+        # 'FEEDS' : {
+        #     'booksdata.json' : {'format' : 'json', 'overwrite' : True},
+        # }
+    }
+
+    def start_requests(self):
+        yield scrapy.Request(f'https://myntra.com/search?q={Product_name}')
+
+    def parse(self, response):
+        items = response.css('div[data-id]')
+
+        for item in items:
+            relative_url = item.css('a[rel] ::attr(href)').get()
+            item_url = f'https://flipkart.com{relative_url}'
+
+            yield response.follow(relative_url, callback=self.parse_item)
+
+
+    def parse_item(self, response):
+        page = response
+        yield{
+            'retailer' : 'myntra',
+            'title' : page.css('h1 ::text').get(),
+            'price' : page.css('div ._30jeq3 ::text').get(),
+            'discount' : page.css('div ._3Ay6Sb ::text').get(),
+            'rating' : page.css('div ._3LWZlK ::text').get(),
+            # 'number_ratings' : k,
+            # P['number_reviews'] = y
+            'seller' : page.css('div #sellerName ::text').get(),
+            'seller_ratings' : page.css('div #sellerName div ::text').get(),
+            'url' : page.url
+        }
+
+
 class FlipkartspiderSpider(scrapy.Spider):
     name = "flipkartSpider"
     allowed_domains = ["flipkart.com"]
@@ -49,7 +89,6 @@ class FlipkartspiderSpider(scrapy.Spider):
             'seller_ratings' : page.css('div #sellerName div ::text').get(),
             'url' : page.url
         }
-
 
 
 
